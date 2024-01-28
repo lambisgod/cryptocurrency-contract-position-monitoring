@@ -35,8 +35,8 @@ Long and short positions are displayed separately, sorted from top to bottom wit
 
 ## 使用說明 (Usage Instructions)
 
-1. 將 `.env.example` 重命名為 `.env`，並填入您的 Binance API 和 Secret Key。
-   Rename `.env.example` to `.env` and fill in your Binance API and Secret Key.
+1. 複製 `.env.example` 檔案並將副本重命名為 `.env`，然後在其中填入您的 Binance API 和 Secret Key。
+   Copy the `.env.example` file and rename the copy to `.env,` then fill in your Binance API and Secret Key.
 
 2. 在命令行或終端機中運行 `node server.js` 來啟動服務器。
    Run `node server.js` in the command line or terminal to start the server.
@@ -51,7 +51,7 @@ If you find this project useful, you can make a donation to the following USDT a
 
 TRC20 USDT 地址 (TRC20 USDT Address): TE5yiT5NcXc3hcfTutM2FaKhz7kRyM3Uy6
 
-![USDT QR Code](./usdt-qr-code.png)
+<!-- ![USDT QR Code](./usdt-qr-code.png) -->
 
 ## Binance API 許可權 (Binance API Permissions)
 
