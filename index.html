@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>合約持倉</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="text-slate-600">
+
+    <div id="app">
+        
+
+        <div class="flex justify-between items-center p-3">
+            <h1 class="text-1xl font-black">合約持倉列表<span>總數（{{ totalUnrealizedProfitCount }}）</span></h1>
+            <div class="text-s text-slate-400">更新時間: {{ lastUpdated }}</div>
+            <div class="text-1xl">未實現盈虧總和: {{ calculateTotalUnrealizedProfit() }}</div>
+        </div>
+
+
+        <div class="flex gap-2">
+            <div class="flex-1 flex gap-1 flex-col bg-green-50">
+                <div class="flex font-black text-1xl justify-center border-b">
+                    <div class="text-green-600">
+                        <span class="text-xs font-normal">({{ totalUnrealizedProfitPositiveAmtPositive }})</span>
+                        {{ positiveUnrealizedProfitCount }}
+                    </div>
+                    ：
+                    <div class="text-red-500">
+                        {{ negativeUnrealizedProfitCount }}
+                        <span class="text-xs font-normal">({{ totalUnrealizedProfitPositiveAmtNegative }})</span>
+                    </div>
+                </div>
+                <div class="p-3" v-for="position in positions" v-if="position.positionAmt > 0">
+                    <div class="flex justify-between items-center mb-1">
+                        <div>
+                            <div class="text-5xl font-black">{{ position.symbol }}</div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-slate-300 text-right">未實現盈虧</div>
+                            <div class="text-3xl font-black"  :class="{'text-emerald-500': position.unRealizedProfit > 0, 'text-rose-500': position.unRealizedProfit < 0, 'text-slate-200': position.unRealizedProfit === 0}">{{ parseFloat(position.unRealizedProfit).toFixed(2) }}</div>
+                        </div>
+                    </div>
+                    <!-- <div>數量 (USDT): {{ calculatePositionValue(position) }}</div> -->
+                    <!-- <div>持倉量: {{ position.positionAmt }}</div> -->
+                    <!-- <div>入場價格: {{ position.entryPrice }}</div> -->
+                    <!-- <div>標記價格: {{ position.markPrice }}</div> -->
+                    <!-- <div>清算價格: {{ position.liquidationPrice }}</div> -->
+                    <!-- <div>杠桿倍數: {{ position.leverage }}</div> -->
+                    <!-- <div>持倉方向: {{ position.positionSide }}</div> -->
+                    <div class="w-full bg-slate-200">
+                        <div class="h-1 bg-red-600" :style="{width: calculateProgress(parseFloat(position.unRealizedProfit).toFixed(2)) + '%'}"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex-1 flex gap-1 flex-col bg-red-50">
+                <div class="flex font-black text-1xl justify-center border-b">
+                    <div class="text-green-600">
+                        <span class="text-xs font-normal">({{ totalUnrealizedProfitNegativeAmtPositive }})</span>
+                        {{ positiveUnrealizedProfitCountNegativeAmt }}
+                    </div>
+                    ：
+                    <div class="text-red-500">
+                        {{ negativeUnrealizedProfitCountNegativeAmt }}
+                        <span class="text-xs font-normal">({{ totalUnrealizedProfitNegativeAmtNegative }})</span>
+                    </div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-bar-positive" :style="{width: negativeProportion + '%'}"></div>
+                </div>
+                <div class="p-3" v-for="position in positions" v-if="position.positionAmt < 0">
+                    <div class="flex justify-between items-center mb-1">
+                        <div>
+                            <div class="text-5xl font-black">{{ position.symbol }}</div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-slate-300 text-right">未實現盈虧</div>
+                            <div class="text-3xl font-black"  :class="{'text-emerald-500': position.unRealizedProfit > 0, 'text-rose-500': position.unRealizedProfit < 0, 'text-slate-200': position.unRealizedProfit === 0}">{{ parseFloat(position.unRealizedProfit).toFixed(2) }}</div>
+                        </div>
+                    </div>
+                    <!-- <div>數量 (USDT): {{ calculatePositionValue(position) }}</div> -->
+                    <!-- <div>持倉量: {{ position.positionAmt }}</div> -->
+                    <!-- <div>入場價格: {{ position.entryPrice }}</div> -->
+                    <!-- <div>標記價格: {{ position.markPrice }}</div> -->
+                    <!-- <div>清算價格: {{ position.liquidationPrice }}</div> -->
+                    <!-- <div>杠桿倍數: {{ position.leverage }}</div> -->
+                    <!-- <div>持倉方向: {{ position.positionSide }}</div> -->
+                    <div class="w-full bg-slate-200">
+                        <div class="h-1 bg-red-600" :style="{width: calculateProgress(parseFloat(position.unRealizedProfit).toFixed(2)) + '%'}"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+
+    </div>
+
+    <script>
+        var app = new Vue({
+            el: '#app',
+            data: {
+                positions: [],
+                lastUpdated: ''
+            },
+            computed: {
+                positiveUnrealizedProfitCount: function() {
+                    return this.positions.filter(p => p.positionAmt > 0 && p.unRealizedProfit > 0).length;
+                },
+                negativeUnrealizedProfitCount: function() {
+                    return this.positions.filter(p => p.positionAmt > 0 && p.unRealizedProfit < 0).length;
+                },
+                positiveUnrealizedProfitCountNegativeAmt: function() {
+                    return this.positions.filter(p => p.positionAmt < 0 && p.unRealizedProfit > 0).length;
+                },
+                negativeUnrealizedProfitCountNegativeAmt: function() {
+                    return this.positions.filter(p => p.positionAmt < 0 && p.unRealizedProfit < 0).length;
+                },
+                positiveProportion: function() {
+                    var total = this.totalPositiveUnrealizedProfit + Math.abs(this.totalNegativeUnrealizedProfit);
+                    return total > 0 ? (this.totalPositiveUnrealizedProfit / total) * 100 : 0;
+                },
+                negativeProportion: function() {
+                    var total = this.totalPositiveUnrealizedProfitNegativeAmt + Math.abs(this.totalNegativeUnrealizedProfitNegativeAmt);
+                    return total > 0 ? (this.totalPositiveUnrealizedProfitNegativeAmt / total) * 100 : 0;
+                },
+                totalUnrealizedProfitCount() {
+                    return this.positiveUnrealizedProfitCount +
+                        this.negativeUnrealizedProfitCount +
+                        this.positiveUnrealizedProfitCountNegativeAmt +
+                        this.negativeUnrealizedProfitCountNegativeAmt;
+                },
+
+
+
+
+// 對於 position.positionAmt > 0 的正 unRealizedProfit 總和
+totalUnrealizedProfitPositiveAmtPositive: function() {
+        return this.positions
+                   .filter(p => p.positionAmt > 0 && p.unRealizedProfit > 0)
+                   .reduce((total, p) => total + parseFloat(p.unRealizedProfit), 0)
+                   .toFixed(2);
+    },
+
+    // 對於 position.positionAmt > 0 的負 unRealizedProfit 總和
+    totalUnrealizedProfitPositiveAmtNegative: function() {
+        return this.positions
+                   .filter(p => p.positionAmt > 0 && p.unRealizedProfit < 0)
+                   .reduce((total, p) => total + parseFloat(p.unRealizedProfit), 0)
+                   .toFixed(2);
+    },
+
+    // 對於 position.positionAmt < 0 的正 unRealizedProfit 總和
+    totalUnrealizedProfitNegativeAmtPositive: function() {
+        return this.positions
+                   .filter(p => p.positionAmt < 0 && p.unRealizedProfit > 0)
+                   .reduce((total, p) => total + parseFloat(p.unRealizedProfit), 0)
+                   .toFixed(2);
+    },
+
+    // 對於 position.positionAmt < 0 的負 unRealizedProfit 總和
+    totalUnrealizedProfitNegativeAmtNegative: function() {
+        return this.positions
+                   .filter(p => p.positionAmt < 0 && p.unRealizedProfit < 0)
+                   .reduce((total, p) => total + parseFloat(p.unRealizedProfit), 0)
+                   .toFixed(2);
+    },
+
+
+
+
+            },
+            mounted: function() {
+                this.updateTitle();
+                this.fetchPositions();
+                setInterval(this.fetchPositions, 60000); // 每60秒更新一次
+            },
+            watch: {
+                positions: function(newVal, oldVal) {
+                    this.updateTitle();
+                }
+            },
+            created: function() {
+                this.fetchPositions();
+                setInterval(this.fetchPositions, 60000); // 每60秒更新一次
+            },
+
+            methods: {
+                fetchPositions: function() {
+                    axios.get('http://localhost:3000/futures')
+                    .then(response => {
+                        this.positions = response.data;
+                        // this.lastUpdated = new Date().toLocaleString('zh-TW'); // 更新時間
+                        this.lastUpdated = new Date().toLocaleString('zh-TW', { hour12: false });
+                    })
+                    .catch(error => {
+                        console.error(error);
+                    });
+                },
+                calculatePositionValue: function(position) {
+                    return (parseFloat(position.positionAmt) * parseFloat(position.entryPrice)).toFixed(2);
+                },
+                calculateTotalUnrealizedProfit: function() {
+                    return this.positions.reduce((total, position) => total + parseFloat(position.unRealizedProfit), 0).toFixed(2);
+                },
+                calculateProgress: function(unRealizedProfit) {
+                    if (unRealizedProfit < 0) {
+                        return Math.min(Math.abs(unRealizedProfit / 50) * 100, 100).toFixed(2);
+                    }
+                    return 0;
+                },
+                updateTitle: function() {
+                    var totalUnrealizedProfit = this.calculateTotalUnrealizedProfit();
+                    var currentTime = new Date().toLocaleTimeString('zh-TW', { hour12: false });
+                    // document.title = currentTime + " - 未實現盈虧總和: " + totalUnrealizedProfit;
+                    document.title = totalUnrealizedProfit + " - " + currentTime;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+
+
+
+
