@@ -104,7 +104,8 @@
             el: '#app',
             data: {
                 positions: [],
-                lastUpdated: ''
+                lastUpdated: '',
+                stopLossAmount: 100 //止損金額(USDT)
             },
             computed: {
                 positiveUnrealizedProfitCount: function() {
@@ -208,7 +209,7 @@ totalUnrealizedProfitPositiveAmtPositive: function() {
                 },
                 calculateProgress: function(unRealizedProfit) {
                     if (unRealizedProfit < 0) {
-                        return Math.min(Math.abs(unRealizedProfit / 50) * 100, 100).toFixed(2);
+                        return Math.min(Math.abs(unRealizedProfit / this.stopLossAmount) * 100, 100).toFixed(2);
                     }
                     return 0;
                 },
